@@ -35,6 +35,10 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Debug
+        shell: bash
+        run: mv docker/absc.Dockerfile docker/Dockerfile
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -42,7 +46,8 @@ jobs:
           tags: |
             nicolasfarabegoli/absc:latest
             nicolasfarabegoli/absc:${{ steps.trick.outputs.version }}
-          file: docker/absc.Dockerfile
+          context: .
+          file: ./docker/Dockerfile
 
       - name: Autotag
         id: autotag

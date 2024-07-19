@@ -68,3 +68,18 @@ jobs:
           name: "Release — ${{ steps.autotag.outputs.tag }}"
           files: "*.pdf"
           tag_name: ${{ steps.autotag.outputs.tag }}
+
+  success:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    if: >-
+      ${{
+        always() && (
+          contains(join(needs.*.result, ','), 'failure')
+          || !contains(join(needs.*.result, ','), 'cancelled')
+        )
+      }}
+    steps:
+      - name: Verify that there were no failures
+        run: ${{ !contains(join(needs.*.result, ','), 'failure') }}

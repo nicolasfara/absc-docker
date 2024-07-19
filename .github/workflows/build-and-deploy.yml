@@ -1,0 +1,65 @@
+name: CI/CD Process
+
+on:
+  push:
+    branches-ignore:
+      - 'renovate/**'
+  pull_request:
+  workflow_dispatch:
+
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Select last commit ABS repository
+        id: trick
+        shell: bash
+        run: |
+          USES=$(cat <<TRICK_RENOVATE
+          - uses: abstools/abstools@5ac35e76de91e9aa6716a5a9382b226df6068f43
+          TRICK_RENOVATE
+          )
+          export USES="$USES"
+          ruby -e 'puts "version=#{ENV["USES"].lines.map { |line| /^-\s+uses:\s+([^\s]+\/[^\s]+)@(.*)\s*$/.match(line) }.map { |match| match[2] }[0]}"' >> $GITHUB_OUTPUT
+
+      - name: Checkout
+        uses: actions/checkout@v4.1.7
+        with:
+          repository: abstools/abstools
+          ref: ${{ steps.trick.outputs.version }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: |
+            nicolasfarabegoli/absc:latest
+            nicolasfarabegoli/absc:${{ steps.trick.outputs.version }}
+          file: docker/absc.Dockerfile
+
+      - name: Autotag
+        id: autotag
+        if: github.ref_name == 'master'
+        run: |
+          git config --global user.name "${GITHUB_ACTOR}"
+          git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          if ! git describe --tags --exact-match HEAD; then
+            TENTATIVE_TAG="$(git describe)" || TENTATIVE_TAG="0.1.0-${{ steps.trick.outputs.version }}"
+            git tag "$TENTATIVE_TAG" -m "Release "$TENTATIVE_TAG""
+          fi
+          echo "TAG=$(git describe --tags --exact-match HEAD)" >> $GITHUB_OUTPUT
+      
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_name == 'master'
+        with:
+          name: "Release — ${{ steps.autotag.outputs.tag }}"
+          files: "*.pdf"
+          tag_name: ${{ steps.autotag.outputs.tag }}

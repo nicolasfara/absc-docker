@@ -19,7 +19,7 @@ jobs:
         shell: bash
         run: |
           USES=$(cat <<TRICK_RENOVATE
-          - uses: abstools/abstools@63d5635680b5c96e393efdf6a767e2bab77d1905
+          - uses: abstools/abstools@cb460398caaf47e5e0407d29ea4260d0ae14b65f
           TRICK_RENOVATE
           )
           export USES="$USES"

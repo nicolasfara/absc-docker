@@ -10,7 +10,7 @@ on:
 
 jobs:
   select-version:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.trick.outputs.version }}
     steps:

@@ -35,7 +35,7 @@ jobs:
         with:
           repository: abstools/abstools
           ref: ${{ steps.trick.outputs.version }}
-      - uses: erlef/setup-beam@v1.20.2
+      - uses: erlef/setup-beam@v1.20.3
         with:
           otp-version: '27.0.1'
       - uses: actions/setup-java@v4.7.1
